@@ -9,7 +9,7 @@ load_dotenv()
 
 rag = RAGManager()
 
-# THE TRICK: Use CrewAI's native LLM class, but point it to Groq's OpenAI-compatible URL!
+# Retaining your specified Groq LLM setup
 groq_llm = LLM(
     model="openai/openai/gpt-oss-120b",
     base_url="https://api.groq.com/openai/v1",
@@ -26,13 +26,15 @@ def search_kerala_tourism(query: str) -> str:
     return "\n".join(results)
 
 class TripCrew:
-    def __init__(self, starting_location, destination, travel_days, travelers, total_budget):
+    # Added travel_preferences here
+    def __init__(self, starting_location, destination, travel_days, travelers, total_budget, travel_preferences="None"):
         self.inputs = {
             "starting_location": starting_location,
             "destination": destination,
             "travel_days": travel_days,
             "travelers": travelers,
-            "total_budget": total_budget
+            "total_budget": total_budget,
+            "travel_preferences": travel_preferences
         }
 
     def run(self):
@@ -43,13 +45,14 @@ class TripCrew:
             verbose=True,
             allow_delegation=False,
             tools=[search_kerala_tourism],
-            llm=groq_llm # Pass our custom CrewAI LLM connection
+            llm=groq_llm
         )
 
         planner = Agent(
             role='Itinerary Planner',
-            goal='Create a realistic, day-by-day itinerary for {travel_days} days to {destination} starting from {starting_location}.',
-            backstory='You are a master travel planner. You organize logical itineraries based ONLY on the factual data provided by the researcher.',
+            # Added preferences to the goal
+            goal='Create a realistic, day-by-day itinerary for {travel_days} days to {destination} starting from {starting_location}, focusing on {travel_preferences}.',
+            backstory='You are a master travel planner. You organize logical itineraries based ONLY on the factual data provided by the researcher and the user preferences.',
             verbose=True,
             allow_delegation=False,
             llm=groq_llm 
@@ -58,27 +61,27 @@ class TripCrew:
         budget_analyst = Agent(
             role='Budget Analyst',
             goal='Review the itinerary and estimate total costs for {travelers} travelers. Compare it to the user budget of {total_budget} INR.',
-            backstory='You are a strict financial advisor. You calculate estimated costs to ensure the trip is financially viable based on the researcher data.',
+            backstory='You are a strict financial advisor. You calculate estimated costs to ensure the trip is financially viable based on the researcher data. You highlight any deficits.',
             verbose=True,
             allow_delegation=False,
             llm=groq_llm 
         )
 
         research_task = Task(
-            description='Search the database for details about {destination}. Extract daily budget estimates, attractions, and any travel constraints.',
+            description='Search the database for details about {destination}. Extract daily budget estimates, attractions matching {travel_preferences}, and travel constraints.',
             expected_output='A clear summary of facts, costs, and travel times for the destination.',
             agent=researcher
         )
 
         plan_task = Task(
-            description='Using the researcher data, create a {travel_days}-day itinerary. Factor in travel time from {starting_location}.',
+            description='Using the researcher data, create a {travel_days}-day itinerary. Factor in travel time from {starting_location} and accommodate {travel_preferences}.',
             expected_output='A structured, day-by-day itinerary with specific activities and logical travel logistics.',
             agent=planner
         )
 
         budget_task = Task(
-            description='Calculate the total estimated cost for {travelers} people. Compare this to the {total_budget} INR budget. Highlight any deficits.',
-            expected_output='A cost breakdown table and a final verdict on whether the trip is affordable.',
+            description='Calculate the total estimated cost for {travelers} people. Compare this to the {total_budget} INR budget. Determine if the trip is feasible and list any warnings.',
+            expected_output='A detailed report containing the final itinerary, cost breakdown, a clear feasibility status (Feasible/Not Feasible), and a list of warnings.',
             agent=budget_analyst
         )
 

@@ -1,36 +1,33 @@
 // frontend/src/App.jsx
 import { useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm' // <-- NEW: Imports table support
 import './App.css'
 
 function App() {
-  // 1. State for the form inputs
   const [formData, setFormData] = useState({
     starting_location: '',
     destination: '',
     travel_days: 1,
     travelers: 1,
-    total_budget: 1000
+    total_budget: 10000,
+    travel_preferences: ''
   });
 
-  // 2. State for the UI feedback
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 3. Handle user typing in the form
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
-    // Pydantic expects numbers for these fields, not strings, so we convert them
     const isNumberField = ['travel_days', 'travelers', 'total_budget'].includes(name);
     const parsedValue = isNumberField ? Number(value) : value;
     
     setFormData({ ...formData, [name]: parsedValue });
   };
 
-  // 4. Handle form submission
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevents the page from refreshing
+    e.preventDefault();
     setLoading(true);
     setError(null);
     setResult(null);
@@ -44,16 +41,13 @@ function App() {
 
       const data = await response.json();
 
-      // If the backend returns an error (400, 422, 500)
       if (!response.ok) {
-        // FastAPI returns validation errors in an array, and custom errors as a string
         const errorMsg = Array.isArray(data.detail) 
-          ? data.detail[0].msg // Pydantic error
-          : data.detail;       // Our custom exception
+          ? data.detail[0].msg 
+          : data.detail;       
         throw new Error(errorMsg || "An error occurred");
       }
 
-      // If successful, save the result to display it
       setResult(data);
     } catch (err) {
       setError(err.message);
@@ -65,7 +59,7 @@ function App() {
   return (
     <div className="container">
       <h1>TripSmith</h1>
-      <h2>Plan Your Kerala Trip</h2>
+      <h2>AI Travel Feasibility & Itinerary Planner</h2>
 
       <form onSubmit={handleSubmit} className="trip-form">
         <div className="form-group">
@@ -75,7 +69,7 @@ function App() {
 
         <div className="form-group">
           <label>Destination (in Kerala):</label>
-          <input type="text" name="destination" value={formData.destination} onChange={handleChange} required placeholder="e.g. Munnar, Kerala" />
+          <input type="text" name="destination" value={formData.destination} onChange={handleChange} required placeholder="e.g. Munnar" />
         </div>
 
         <div className="form-group">
@@ -93,24 +87,45 @@ function App() {
           <input type="number" name="total_budget" min="1" value={formData.total_budget} onChange={handleChange} required />
         </div>
 
+        <div className="form-group">
+          <label>Travel Preferences:</label>
+          <input type="text" name="travel_preferences" value={formData.travel_preferences} onChange={handleChange} placeholder="e.g. Adventure, Relaxing, Nature" />
+        </div>
+
         <button type="submit" disabled={loading}>
-          {loading ? "Planning..." : "Plan My Trip"}
+          {loading ? "Analyzing Trip Feasibility..." : "Plan My Trip"}
         </button>
       </form>
 
-      {/* Display Errors */}
       {error && (
         <div className="error-box">
           <strong>Error:</strong> {error}
         </div>
       )}
 
-      {/* Display Success Response */}
       {result && (
-        <div className="success-box">
-          <h3>{result.status.toUpperCase()}</h3>
-          <p>{result.message}</p>
-          <pre>{JSON.stringify(result.received_data, null, 2)}</pre>
+        <div className="success-box" style={{ marginTop: '2rem', textAlign: 'left' }}>
+          <h3>Feasibility Status: <span style={{ color: result.feasibility_status === "Feasible" ? "green" : "red" }}>{result.feasibility_status}</span></h3>
+          
+          {result.warnings && result.warnings.length > 0 && (
+            <div className="warning-box" style={{ backgroundColor: '#fff3cd', padding: '10px', borderRadius: '5px', marginBottom: '15px' }}>
+              <strong>⚠️ Warnings:</strong>
+              <ul style={{ margin: 0 }}>
+                {result.warnings.map((warn, index) => (
+                  <li key={index}>{warn}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <hr />
+          
+          <div className="markdown-body">
+            {/* NEW: remarkPlugins prop added here to render tables properly */}
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {result.itinerary}
+            </ReactMarkdown>
+          </div>
         </div>
       )}
     </div>

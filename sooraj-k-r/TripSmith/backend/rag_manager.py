@@ -4,20 +4,17 @@ import chromadb
 from sentence_transformers import SentenceTransformer
 from pypdf import PdfReader
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 class RAGManager:
-    def __init__(self, db_path="./chroma_db", data_folder="./data"):
-        self.data_folder = data_folder
+    def __init__(self, db_path="chroma_db", data_folder="data"):
+        # Combine base directory with folder names to make absolute paths
+        self.data_folder = os.path.join(BASE_DIR, data_folder)
+        full_db_path = os.path.join(BASE_DIR, db_path)
         
-        # 1. Initialize Persistent ChromaDB
-        # Persistent means the database is saved to a folder on your hard drive, 
-        # so we don't lose data when the server restarts.
-        self.client = chromadb.PersistentClient(path=db_path)
-        
-        # Create or load a "table" (collection) for our tourism data
+        self.client = chromadb.PersistentClient(path=full_db_path)
         self.collection = self.client.get_or_create_collection(name="kerala_tourism")
         
-        # 2. Load the Sentence Transformer model
-        # all-MiniLM-L6-v2 is a fast, lightweight, and highly popular embedding model.
         print("Loading Sentence Transformer model...")
         self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
         print("Model loaded.")
