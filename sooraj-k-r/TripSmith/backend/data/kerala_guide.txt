@@ -1,0 +1,6 @@
+# backend/data/kerala_guide.txt
+Munnar is a hill station famous for its tea estates, cool climate, and the Eravikulam National Park. Estimated budget per day: 3000 INR. Ideal for 2-3 days.
+Wayanad is known for waterfalls, spice plantations, and wildlife sanctuaries like Muthanga. Estimated budget per day: 2500 INR. Ideal for 3-4 days.
+Alleppey (Alappuzha) is famous for its backwater houseboats and canals. A 1-night houseboat stay costs around 8000 INR. 
+Kochi is a historic port city with Chinese fishing nets, Fort Kochi, and vibrant markets. Estimated budget per day: 2000 INR.
+Travel constraint: Driving from Kochi to Munnar takes about 4 hours due to winding mountain roads.
