@@ -33,7 +33,7 @@ function App() {
     setResult(null);
 
     try {
-      const response = await fetch("http://localhost:8000/api/plan-trip", {
+      const response = await fetch("https://pixelprogrammer-tripsmith-api.hf.space", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
