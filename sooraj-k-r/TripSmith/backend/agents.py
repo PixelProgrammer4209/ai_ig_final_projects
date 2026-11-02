@@ -81,7 +81,7 @@ class TripCrew:
 
         budget_task = Task(
             description='Calculate the total estimated cost for {travelers} people. Compare this to the {total_budget} INR budget. Determine if the trip is feasible and list any warnings.',
-            expected_output='A detailed report containing the final itinerary, cost breakdown, a clear feasibility status (Feasible/Not Feasible), and a list of warnings.',
+            expected_output='A detailed report containing the final itinerary, cost breakdown, a clear feasibility status (Feasible/Not Feasible), and a list of warnings. CRITICAL INSTRUCTION: You must calculate the itemized cost breakdown FIRST. Compare the total estimated cost to the user provided budget. You are STRICTLY FORBIDDEN from generating any warnings about the budget being "tight" or "insufficient" if the total estimated cost is lower than the user budget.',
             agent=budget_analyst
         )
 
